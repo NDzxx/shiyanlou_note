@@ -6,5 +6,5 @@
 * [重载输入输出运算符和友元函数](reload.md)
 * [下标运算符重载](reload2.md)
 * [weak_ptr](weakptr.md)
-* memLeak
+* [memLeak](memleak.md)
 
