@@ -35,5 +35,66 @@ EXECUTE stmt2 USING @a, @b;
 | 10 |   
 +------------+   
 
+DEALLOCATE PREPARE stmt2;   
+ 
+ 
+如果你的MySQL 版本是 5.0.7 或者更高的，你还可以在 LIMIT 子句中使用它，示例如下： 
+Sql代码  
+```
+SET @a=1;mysql> PREPARE STMT FROM "SELECT * FROM tbl LIMIT ?";   
+EXECUTE STMT USING @a;   
+SET @skip=1; SET @numrows=5;   
+PREPARE STMT FROM "SELECT * FROM tbl LIMIT ?, ?";   
+EXECUTE STMT USING @skip, @numrows; 
+```
+
+使用 PREPARE 的几个注意点：   
+A：PREPARE stmt_name FROM preparable_stmt;预定义一个语句，并将它赋给 stmt_name ，tmt_name 是不区分大小写的。   
+B： 即使 preparable_stmt 语句中的 ? 所代表的是一个字符串，你也不需要将 ? 用引号包含起来。   
+C： 如果新的 PREPARE 语句使用了一个已存在的 stmt_name ，那么原有的将被立即释放！ 即使这个新的 PREPARE 语句因为错误而不能被正确执行。 
+ 
+D： PREPARE stmt_name 的作用域是当前客户端连接会话可见。   
+E： 要释放一个预定义语句的资源，可以使用 DEALLOCATE PREPARE 句法。   
+F： EXECUTE stmt_name 句法中，如果 stmt_name 不存在，将会引发一个错误。   
+G： 如果在终止客户端连接会话时，没有显式地调用 DEALLOCATE PREPARE 句法释放资源，服务器端会自己动释放它。   
+H： 在预定义语句中，CREATE TABLE, DELETE, DO, INSERT, REPLACE, SELECT, SET, UPDATE, 和大部分的 SHOW 句法被支持。   
+ 
+I： PREPARE 语句不可以用于存储过程，自定义函数！但从 MySQL 5.0.13 开始，它可以被用于存储过程，仍不支持在函数中使用！ 
+ 
+ 
+下面给个示例： 
+  
+Sql代码  
+CREATE PROCEDURE `p1`(IN id INT UNSIGNED,IN name VARCHAR(11))    
+BEGIN lable_exit:    
+BEGIN    
+SET @SqlCmd = 'SELECT * FROM tA ';    
+IF id IS NOT NULL THEN  SET @SqlCmd = CONCAT(@SqlCmd , 'WHERE id=?');    
+PREPARE stmt FROM @SqlCmd;  SET @a = id;    
+EXECUTE stmt USING @a;    
+LEAVE lable_exit;    
+END IF;    
+IF name IS NOT NULL THEN  SET @SqlCmd = CONCAT(@SqlCmd , 'WHERE name LIKE ?');    
+PREPARE stmt FROM @SqlCmd;    
+SET @a = CONCAT(name, '%');    
+EXECUTE stmt USING @a;    
+LEAVE lable_exit;    
+END IF;    
+END lable_exit;    
+END;    
+CALL `p1`(1,NULL);    
+CALL `p1`(NULL,'QQ');    
+DROP PROCEDURE `p1`;  
+  
+了解了PREPARE的用法，再用变量做表名就很容易了。  
+不过在实际操作过程中还发现其他一些问题，  
+比如变量定义，declare变量和set @var=value变量的用法以及参数传入的变量。 
+ 
+测试后发现，set @var=value这样定义的变量直接写在字符串中就会被当作变量转换，  
+declare的变量和参数传入的变量则必须用CONCAT来连接。具体的原理没有研究。 
+ 
+EXECUTE stmt USING @a;这样的语句USING后面的变量也只能用set @var=value这种，  
+declare和参数传入的变量不行。   
+另外php调用mysql存储过程的时候也碰到很多问题，总是出现PROCEDURE p can't return a result set in the given context这样的问题。
 
     
