@@ -12,4 +12,5 @@
 * [mysql](mysql.md)
    * [mysql存储过程中用变量做表名](procedure.md)
    * [limit](limit.md)
+   * mySQL CAST与CONVERT函数的用法
 
