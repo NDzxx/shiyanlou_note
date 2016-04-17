@@ -121,5 +121,5 @@ LEFT JOIN操作用于在任何的 FROM 子句中，
 field1, field2参数指定被联接的字段的名称。且这些字段必须有相同的数据类型及包含相同类型的数据，但它们不需要有相同的 
 名称。 
 compopr参数指定关系比较运算符："="， "<"， ">"， "<="， ">=" 或 "<>"。 
-如果在INNER JOIN操作中要联接包含Memo 数据类型或 OLE Object 数据类型数据的字段，将会发生错误。 
+如果在INNER JOIN操作中要联接包含Memo 数据类型或 OLE Object 数据类型数据的字段，将会发生错误。   
 详细出处参考：http://www.jb51.net/article/15386.htm
