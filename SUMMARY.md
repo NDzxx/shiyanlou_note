@@ -10,5 +10,5 @@
    * [memLeak](memleak.md)
    * [实验楼大作业](homework.md)
 * [mysql](mysql.md)
-   * mysql存储过程中用变量做表名
+   * [mysql存储过程中用变量做表名](procedure.md)
 
