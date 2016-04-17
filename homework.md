@@ -171,7 +171,8 @@ CCourseInfo& CCourseInfo::operator=(const CCourseInfo& rInfo)
 }
 bool CCourseInfo::operator==(const CCourseInfo& rInfo) const
 {
-    return (this->m_idCourse == rInfo.m_idCourse) && (this->m_sCouseName == rInfo.m_sCouseName);
+    return (this->m_idCourse == rInfo.m_idCourse) 
+    && (this->m_sCouseName == rInfo.m_sCouseName);
 }
 CCourseInfo::operator string() const
 {
@@ -183,7 +184,8 @@ CCourseInfo::operator string() const
 }
 ostream &operator<<(ostream &os, const CCourseInfo &rInfo)
 {
-    os << "courseId:os" << rInfo.m_idCourse << "+" << "courseName:" << rInfo.m_sCouseName << endl;
+    os << "courseId:os" << rInfo.m_idCourse << "+" 
+    << "courseName:" << rInfo.m_sCouseName << endl;
     return os;
 }
 istream &operator>>(istream &is, CCourseInfo &rInfo)
@@ -241,7 +243,8 @@ void CPGCourse::AnnounceHomework(stringstream &ss) const
     CCourseInfo::AnnounceHomework(ss);
     ss << m_shomework << endl;
 }
-bool  CCourseMgr::CreateCourse(courseTypeEnum type, string strCourseName, string strHomeWork)
+bool  CCourseMgr::CreateCourse(courseTypeEnum type, \
+string strCourseName, string strHomeWork)
 {
     try
     {
@@ -300,7 +303,8 @@ CCourseMgr::CCourseMgr(const vector<CCourseInfo> &rCourseVec)
 }
 CCourseMgr::CCourseMgr(const CCourseMgr &rCourseMgr)
 {
-    COURSE_MAP tmpMap = rCourseMgr.m_mapCourse;//转1手，防止调用的是this,丢失了vec内的内容
+//转1手，防止调用的是this,丢失了vec内的内容
+    COURSE_MAP tmpMap = rCourseMgr.m_mapCourse;
     m_mapCourse.clear();
     m_mapCourse = tmpMap;
 }
@@ -488,7 +492,9 @@ void CCourseMgr::SaveCourse(fstream &fs)
         fs.seekg(0, ios::end);//文件指针移到末尾
         for (const auto &rInfo : m_mapCourse)
         {
-            fs << "courseId:" << rInfo.second->GetCourseId() << " " << "courseName:" << rInfo.second->GetCourseName() << endl;
+            fs << "courseId:" << 
+            rInfo.second->GetCourseId() << " " 
+            << "courseName:" << rInfo.second->GetCourseName() << endl;
         }
         fs.close();
     }
@@ -548,4 +554,741 @@ bool  CCourseMgr::SearchCourseByName(string szName, vector<string> &vecCorrect)
     }
 }
 ```
+##cmd.h  
+
+```C++
+#ifndef  __CMD_H_
+#define __CMD_H_
+#include <map>
+#include <string>
+#include <memory>
+#include <sstream>
+#include <cctype>
+#include "course.h"
+#include "Cmd.h"
+using namespace std;
+const string scnLogPath = "cnResult.log";
+const string senLogPath = "enResult.log";
+typedef enum lanuageEnum
+{
+    simpleChinese        = 1,
+    english                = 2,
+};
+enum exitCode
+{
+    code_exit = 0,//退出程序
+    code_circle = 1,//继续循环
+};
+enum courseCmd
+{
+    Cmd_PrintHelpInfo = 1,
+    Cmd_PrintCourseInfo = 2,
+    Cmd_PrintCourseNum = 3,
+    Cmd_PrintlongName = 4,
+    Cmd_DeleteLastCourse = 5,
+    Cmd_DelCourseById = 6,
+    Cmd_DelCourseByName = 7,
+    Cmd_sortFromLess = 8,
+    Cmd_sortFromMore = 9,
+    Cmd_SearchByName = 10,
+    Cmd_TestIdOPerator = 11,
+    Cmd_exitCourseMgr = 12,
+};
+class Clog
+{
+public:
+    Clog() = default;
+    ~Clog();
+    bool init(const string &sFileName);
+    void WriteLog(const stringstream &ss);
+    void SaveLog();
+private:
+    ofstream m_outfs;
+};
+class Ccmd
+{
+public:
+    Ccmd()=default;
+    virtual ~Ccmd();
+    bool init(const string &sFileName,shared_ptr<CCourseMgr> pMgrRef);
+    exitCode inputCmd(string strCmd);
+    void SetLanguageType(lanuageEnum languageType) { m_languageType = languageType; };
+protected:
+    void BindCmdToOper(string strCmd, courseCmd cmdOper);
+    virtual void PrintHelpInfo();
+    virtual void PrintCourseInfo();
+    virtual void PrintCourseNum();
+    virtual void PrintlongName();
+    virtual void DeleteLastCourse();
+    virtual bool DelCourseById(OBJID idCourse);
+    virtual bool DelCourseByName(const string &sCourseName);
+    virtual void SortCourse(sortEnum sortType);
+    virtual void SearchCourseByName(string szName);
+    virtual void TestIdOPerator(OBJID id);
+    virtual void ExitMgr() = 0;
+    virtual string OperSucc() = 0;
+    virtual string OperFail() = 0;
+private:
+    void ShowStream();
+    string InputCourseName();
+    bool InputCourseId(OBJID &idCourse);
+private:
+    lanuageEnum m_languageType;
+    typedef std::map<string, courseCmd> MAP_OPER;
+    MAP_OPER m_mapCmd;
+    Clog log;
+    shared_ptr<CCourseMgr> m_mgrRef = nullptr;
+protected:
+    stringstream m_ss;
+};
+class CEnCcmd:public Ccmd//英文命令
+{
+public:
+    CEnCcmd();
+    ~CEnCcmd() = default;
+private:
+protected:
+    virtual void PrintHelpInfo() override;
+    virtual void PrintCourseInfo() override;
+    virtual void PrintCourseNum() override;
+    virtual void PrintlongName() override;
+    virtual void DeleteLastCourse() override;
+    virtual bool DelCourseById(OBJID idCourse) override;
+    virtual bool DelCourseByName(const string &sCourseName) override;
+    virtual void SortCourse(sortEnum sortType) override;
+    virtual void SearchCourseByName(string szName) override;
+    virtual void TestIdOPerator(OBJID id) override;
+    virtual void ExitMgr() override;
+    virtual string OperSucc() override;
+    virtual string OperFail() override;
+};
+class CCnCcmd :public Ccmd//中文命令
+{
+public:
+    CCnCcmd();
+    ~CCnCcmd() = default;
+private:
+protected:
+    virtual void PrintHelpInfo() override;
+    virtual void PrintCourseInfo() override;
+    virtual void PrintCourseNum() override;
+    virtual void PrintlongName() override;
+    virtual void DeleteLastCourse() override;
+    virtual bool DelCourseById(OBJID idCourse) override;
+    virtual bool DelCourseByName(const string &sCourseName) override;
+    virtual void SortCourse(sortEnum sortType) override;
+    virtual void SearchCourseByName(string szName) override;
+    virtual void TestIdOPerator(OBJID id) override;
+    virtual void ExitMgr() override;
+    virtual string OperSucc() override;
+    virtual string OperFail() override;
+};
+class CcmdMgr
+{
+public:
+    bool CreateSys(lanuageEnum languageType, shared_ptr<CCourseMgr> pMgrRef);//简单工厂
+    void Input();
+private:
+    typedef std::map<lanuageEnum, shared_ptr<Ccmd>> MAP_CMD;
+    MAP_CMD m_mapCmd;
+};
+#endif
+```
+
+##cmd.cpp  
+```C++
+#include "Cmd.h"
+Clog::~Clog()
+{
+    if (m_outfs.is_open())
+    {
+        m_outfs.close();
+    }
+}
+bool Clog::init(const string &sFileName)
+{
+    try
+    {
+        m_outfs.open(sFileName, ios::out);
+        if (!m_outfs.is_open())
+        {
+            throw logic_error("file open err!");
+            return false;
+        }
+        return true;
+    }
+    catch (const exception& e)
+    {
+        cout << "file:" << __FILE__ << "line:" << __LINE__ << endl;
+        cout << e.what() << endl;
+        return false;
+    }
+}
+void Clog::WriteLog(const stringstream &ss)
+{
+    m_outfs << ss.str() << endl;
+}
+bool Ccmd::init(const string &sFileName, shared_ptr<CCourseMgr> pMgrRef)
+{
+    if (!m_mgrRef)
+        m_mgrRef = pMgrRef;
+    return log.init(sFileName);
+}
+Ccmd::~Ccmd()
+{
+    m_mapCmd.clear();
+}
+void Ccmd::BindCmdToOper(string strCmd, courseCmd cmdOper)
+{
+    m_mapCmd.insert(make_pair(strCmd, cmdOper));
+}
+exitCode Ccmd::inputCmd(string strCmd)
+{
+    auto iter = m_mapCmd.find(strCmd);
+    if (iter != m_mapCmd.end())
+    {
+        courseCmd cmd = iter->second;
+        switch (cmd)
+        {
+        case Cmd_PrintHelpInfo:
+        {
+            PrintHelpInfo();
+            log.WriteLog(m_ss);
+            ShowStream();
+            break;
+        }
+        case Cmd_PrintCourseInfo:
+        {
+            PrintCourseInfo();
+            log.WriteLog(m_ss);
+            ShowStream();
+            break;
+        }
+        case Cmd_PrintCourseNum:
+        {
+            PrintCourseNum();
+            log.WriteLog(m_ss);
+            ShowStream();
+            break;
+        }
+        case Cmd_PrintlongName:
+        {
+            PrintlongName();
+            log.WriteLog(m_ss);
+            ShowStream();
+            break;
+        }
+        case Cmd_DeleteLastCourse:
+        {
+            DeleteLastCourse();
+            log.WriteLog(m_ss);
+            ShowStream();
+            break;
+        }
+        case Cmd_DelCourseById:
+        {
+            OBJID id;
+            if (InputCourseId(id))
+            {
+                DelCourseById(id);
+            }
+            else
+            {
+                m_ss << OperFail() << endl;;
+            }
+            log.WriteLog(m_ss);
+            ShowStream();
+            break;
+        }
+        case Cmd_DelCourseByName:
+        {
+            string tip = OperFail();
+            string szName = InputCourseName();
+            DelCourseByName(szName);
+            log.WriteLog(m_ss);
+            ShowStream();
+            break;
+        }
+        case Cmd_sortFromLess:
+        {
+            Ccmd::SortCourse(sortFromLesstoMore);
+            log.WriteLog(m_ss);
+            ShowStream();
+            break;
+        }
+        case Cmd_sortFromMore:
+        {
+            Ccmd::SortCourse(sortFromMoretoLess);
+            log.WriteLog(m_ss);
+            ShowStream();
+            break;
+        }
+        case Cmd_SearchByName:
+        {
+            string szName = InputCourseName();
+            SearchCourseByName(szName);
+            log.WriteLog(m_ss);
+            ShowStream();
+            break;
+        }
+        case Cmd_TestIdOPerator:
+        {
+            OBJID id;
+            if (InputCourseId(id))
+            {
+                TestIdOPerator(id);
+            }
+            else
+            {
+                m_ss << OperFail() << endl;;
+            }
+            log.WriteLog(m_ss);
+            ShowStream();
+            break;
+        }
+        case Cmd_exitCourseMgr:
+        {
+            ExitMgr();
+            log.WriteLog(m_ss);
+            ShowStream();
+            return code_exit;
+            break;
+        }
+        default:
+            break;
+        }
+    }
+    return code_circle;
+}
+void Ccmd::PrintHelpInfo()
+{
+    switch (m_languageType)
+    {
+    case simpleChinese:
+        m_ss << "Cmd 输入语言 :中文" << endl;
+        break;
+    case english:
+        m_ss << "Cmd input language :english" << endl;
+        break;
+    default:
+        m_ss << "Cmd input language :invalid" << endl;
+        break;
+    }
+}
+void Ccmd::PrintCourseInfo()
+{
+    m_mgrRef->PrintCourseList(m_ss);
+}
+void Ccmd::PrintCourseNum()
+{
+    m_ss << m_mgrRef->GetCourseNum() << endl;
+}
+void Ccmd::PrintlongName()
+{
+    m_mgrRef->FindLongNameCourse(m_ss);
+}
+void Ccmd::DeleteLastCourse()
+{
+    m_mgrRef->DelLatestCourse();
+    m_ss<<OperSucc()<<endl;
+    PrintCourseInfo();
+}
+bool Ccmd::DelCourseById(OBJID idCourse)
+{
+    if (m_mgrRef->DelCourse(idCourse))
+    {
+        m_ss << OperSucc() << endl;
+        PrintCourseInfo();
+        return true;
+    }
+    m_ss << OperFail() << endl;
+    return false;
+}
+bool Ccmd::DelCourseByName(const string &sCourseName)
+{
+    if (m_mgrRef->DelCourseByName(sCourseName))
+    {
+        m_ss << OperSucc() << endl;
+        PrintCourseInfo();
+        return true;
+    }
+    m_ss << OperFail() << endl;
+    return false;
+}
+void Ccmd::SortCourse(sortEnum sortType)
+{
+    vector<string> vecSort;
+    m_mgrRef->SortCourse(sortType, vecSort);
+    for (const auto &r : vecSort)
+    {
+        m_ss << r << " ";
+    }
+    m_ss << endl;
+}
+void Ccmd::SearchCourseByName(string szName)
+{
+    vector<string> vecStr;
+    if (m_mgrRef->SearchCourseByName(szName, vecStr))
+    {
+        for (const auto &r : vecStr)
+        {
+            m_ss << r << " ";
+        }
+        m_ss << endl;
+    }
+    else
+    {
+        m_ss << OperFail() << endl;
+    }
+}
+void Ccmd::TestIdOPerator(OBJID id)
+{
+    shared_ptr<CCourseInfo> pRef = m_mgrRef->operator[] (id);
+    m_ss << *pRef << endl;
+}
+void Ccmd::ShowStream()
+{
+    //std::cout << m_ss.rubf() << endl;
+    string s = m_ss.str();
+    cout<<s<<endl;
+    m_ss.str("");
+}
+string Ccmd::InputCourseName()
+{
+    string sCourseName;
+    cin >> sCourseName;
+    return sCourseName;
+}
+bool Ccmd::InputCourseId(OBJID &idCourse)
+{
+    char input;
+    cin >> input;
+    if (!isdigit(input))
+    {
+        m_ss << OperFail() << endl;
+        log.WriteLog(m_ss);
+        ShowStream();
+        return false;
+    }
+    else
+    {
+        idCourse = input - '0';
+        return true;
+    }
+}
+CEnCcmd::CEnCcmd()
+{
+    BindCmdToOper("one", Cmd_PrintHelpInfo);
+    BindCmdToOper("two", Cmd_PrintCourseInfo);
+    BindCmdToOper("three", Cmd_PrintCourseNum);
+    BindCmdToOper("four", Cmd_PrintlongName);
+    BindCmdToOper("five", Cmd_DeleteLastCourse);
+    BindCmdToOper("six", Cmd_DelCourseById);
+    BindCmdToOper("seven", Cmd_DelCourseByName);
+    BindCmdToOper("eight", Cmd_sortFromLess);
+    BindCmdToOper("nine", Cmd_sortFromMore);
+    BindCmdToOper("ten", Cmd_SearchByName);
+    BindCmdToOper("elevent", Cmd_TestIdOPerator);
+    BindCmdToOper("twelve", Cmd_exitCourseMgr);
+}
+void CEnCcmd::PrintHelpInfo()
+{
+    m_ss << "shiyanlou manager system help" << endl;
+    m_ss << "input:mean" << endl;
+    m_ss << "one:printHelpInfo" << endl;
+    m_ss << "two:printCourseInfo" << endl;
+    m_ss << "three:rintCourseNum" << endl;
+    m_ss << "four:printlonggestName" << endl;
+    m_ss << "five:eleteLastCourse" << endl;
+    m_ss << "six:DelCourseById" << endl;
+    m_ss << "seven:DelCourseByName" << endl;
+    m_ss << "eight:SortCourse->sortFromLesstoMore" << endl;
+    m_ss << "nine:SortCourse->sortFromMoretoLess" << endl;
+    m_ss << "ten:SearchCourseByName" << endl;
+    m_ss << "elevent:estIdOPerator" << endl;
+    m_ss << "twelve:Exit" << endl;
+}
+void CEnCcmd::PrintCourseInfo()
+{
+    m_ss << "PrintCourseInfo:" << endl;
+    Ccmd::PrintCourseInfo();
+}
+void CEnCcmd::PrintCourseNum()
+{
+    m_ss << "PrintCourseNum:" << endl;
+    Ccmd::PrintCourseInfo();
+}
+void CEnCcmd::PrintlongName()
+{
+    m_ss << "PrintlongName:" << endl;
+    Ccmd::PrintCourseInfo();
+}
+void CEnCcmd::DeleteLastCourse()
+{
+    m_ss << "DeleteLastCourse:" << endl;
+    Ccmd::DeleteLastCourse();
+}
+bool CEnCcmd::DelCourseById(OBJID idCourse)
+{
+    m_ss << "DelCourseById:" << idCourse<< endl;
+    return Ccmd::DelCourseById(idCourse);
+}
+bool CEnCcmd::DelCourseByName(const string &sCourseName)
+{
+    m_ss << "DelCourseByName:" << sCourseName << endl;
+    return Ccmd::DelCourseByName(sCourseName);
+}
+void CEnCcmd::SortCourse(sortEnum sortType)
+{
+    m_ss << "SortCourse:" << sortType << endl;
+    Ccmd::SortCourse(sortType);
+}
+void CEnCcmd::SearchCourseByName(string szName)
+{
+    m_ss << "SearchCourseByName:" << szName << endl;
+    Ccmd::SearchCourseByName(szName);
+}
+void CEnCcmd::TestIdOPerator(OBJID id)
+{
+    m_ss << "TestIdOPerator:" << id << endl;
+    Ccmd::TestIdOPerator(id);
+}
+void CEnCcmd::ExitMgr()
+{
+    m_ss << "ExitMgr" << endl;
+}
+string CEnCcmd::OperSucc()
+{
+    string szSucc = "operSucc";
+    return szSucc;
+}
+string CEnCcmd::OperFail()
+{
+    string szFail = "operFail";
+    return szFail;
+}
+CCnCcmd::CCnCcmd()
+{
+    BindCmdToOper("1", Cmd_PrintHelpInfo);
+    BindCmdToOper("2", Cmd_PrintCourseInfo);
+    BindCmdToOper("3", Cmd_PrintCourseNum);
+    BindCmdToOper("4", Cmd_PrintlongName);
+    BindCmdToOper("5", Cmd_DeleteLastCourse);
+    BindCmdToOper("6", Cmd_DelCourseById);
+    BindCmdToOper("7", Cmd_DelCourseByName);
+    BindCmdToOper("8", Cmd_sortFromLess);
+    BindCmdToOper("9", Cmd_sortFromMore);
+    BindCmdToOper("10", Cmd_SearchByName);
+    BindCmdToOper("11", Cmd_TestIdOPerator);
+    BindCmdToOper("12", Cmd_exitCourseMgr);
+}
+void CCnCcmd::PrintHelpInfo()
+{
+    m_ss << "实验楼课程管理程序帮助列表" << endl;
+    m_ss << "输入命令：含义" << endl;
+    m_ss << "1：打印出程序帮助信息" << endl;
+    m_ss << "2：打印程序存贮所有课程id和名字" << endl;
+    m_ss << "3：打印课程数量" << endl;
+    m_ss << "4：打印名字最长的课程，可有多个" << endl;
+    m_ss << "5：删除最后一个课程" << endl;
+    m_ss << "6:输入课程id删除课程" << endl;
+    m_ss << "7:输入课程名删除课程" << endl;
+    m_ss << "8:从小到大排序" << endl;
+    m_ss << "9:从大到小排序" << endl;
+    m_ss << "10:按文件名模糊查找课程" << endl;
+    m_ss << "11：下标运算符测试" << endl;
+    m_ss << "12:退出程序" << endl;
+}
+void CCnCcmd::PrintCourseInfo()
+{
+    m_ss << "输入命令:打印所有课程信息" << endl;
+    Ccmd::PrintCourseInfo();
+}
+void CCnCcmd::PrintCourseNum()
+{
+    m_ss << "输入命令:打印课程数量" << endl;
+    Ccmd::PrintCourseInfo();
+}
+void CCnCcmd::PrintlongName()
+{
+    m_ss << "输入命令:打印名字最长的课程" << endl;
+    Ccmd::PrintCourseInfo();
+}
+void CCnCcmd::DeleteLastCourse()
+{
+    m_ss << "输入命令:删除最新一门课程" << endl;
+    Ccmd::DeleteLastCourse();
+}
+bool CCnCcmd::DelCourseById(OBJID idCourse)
+{
+    m_ss << "输入命令:删除课程,id:" << idCourse << endl;
+    return Ccmd::DelCourseById(idCourse);
+}
+bool CCnCcmd::DelCourseByName(const string &sCourseName)
+{
+    m_ss << "输入命令:删除课程,name:" << sCourseName << endl;
+    return Ccmd::DelCourseByName(sCourseName);
+}
+void CCnCcmd::SortCourse(sortEnum sortType)
+{
+    m_ss << "显示排序后信息,type:" <<sortType<< endl;
+    Ccmd::SortCourse(sortType);
+}
+void CCnCcmd::SearchCourseByName(string szName)
+{
+    m_ss << "按课程名查找结果：" << endl;
+    Ccmd::SearchCourseByName(szName);
+}
+void CCnCcmd::TestIdOPerator(OBJID id)
+{
+    m_ss << "下标运算符测试结果为:" << endl;
+    Ccmd::TestIdOPerator(id);
+}
+void CCnCcmd::ExitMgr()
+{
+    m_ss << "退出管理系统"<<endl;
+}
+string CCnCcmd::OperSucc()
+{
+    string szSucc = "操作成功";
+    return szSucc;
+}
+string CCnCcmd::OperFail()
+{
+    string szFail = "操作失败";
+    return szFail;
+}
+bool CcmdMgr::CreateSys(lanuageEnum languageType, shared_ptr<CCourseMgr> pMgrRef)
+{
+    try
+    {
+        shared_ptr<Ccmd> pCmdRef = nullptr;
+        switch (languageType)
+        {
+        case simpleChinese:
+        {
+            pCmdRef = make_shared<CCnCcmd>();
+            pCmdRef->init(scnLogPath, pMgrRef);
+            pCmdRef->SetLanguageType(languageType);
+        }
+        break;
+        case english:
+        {
+            pCmdRef = make_shared<CEnCcmd>();
+            pCmdRef->init(senLogPath, pMgrRef);
+            pCmdRef->SetLanguageType(languageType);
+        }
+        break;
+        default:
+            break;
+        }
+        if (pCmdRef != nullptr)
+        {
+            m_mapCmd.insert(make_pair(languageType, pCmdRef));
+        }
+    }
+    catch (const exception& e)
+    {
+        cout << "file:" << __FILE__ << "line:" << __LINE__ << endl;
+        cout << e.what() << endl;
+        return false;
+    }
+}
+void CcmdMgr::Input()
+{
+    int szNum;
+    exitCode code;
+    cout << "choose language:1:chinese;2:english;"<<endl;
+    cin >> szNum;
+    switch (szNum)
+    {
+    case 1:
+    {
+        auto iter = m_mapCmd.find(simpleChinese);
+        if (iter != m_mapCmd.end())
+        {
+            shared_ptr<Ccmd> pCmdRef = iter->second;
+            cout<<"中文操作系统,请输入命令，输入1打印命令帮助"<<endl;
+            while(1)
+            {
+                string szInput;
+                cin>>szInput;
+                code = pCmdRef->inputCmd(szInput);
+                if(code_exit == code )
+                {
+                    return;
+                }
+            }
+        }
+    }
+    case 2:
+    {
+        auto iter = m_mapCmd.find(english);
+        if (iter != m_mapCmd.end())
+        {
+            shared_ptr<Ccmd> pCmdRef = iter->second;
+            cout<<"english operation system,
+            please input cmd,input one to PrintHelp"<<endl;
+            while(1)
+            {
+                string szInput;
+                cin>>szInput;
+                code = pCmdRef->inputCmd(szInput);
+                if(code_exit == code )
+                {
+                    return;
+                }
+            }
+        }
+    }
+    default:
+        cout<<"invalid operation,exit system"<<endl;
+        break;
+    }
+}
+```
+##main.cpp
+```C++
+#include "course.h"
+#include <sstream>
+#include <memory>
+#include <string>
+#include "Cmd.h"
+using namespace std;
+struct courseData
+{
+    courseTypeEnum type;
+    string courseName;
+    string strHomeWork;
+};
+int main()
+{
+    std::vector<courseData> courseVec;
+    courseData data1={xm_course,"C++","每周天晚上20:00交作业"};
+    courseVec.push_back(data1);
+    courseData data2={pg_course,"HTML","时间剩余60分钟"};
+     courseVec.push_back(data2);
+    courseData data3={pg_course,"HTML5","时间剩余120分钟"};
+     courseVec.push_back(data3);
+    courseData data4={xm_course,"NodeJS","下周一晚上20:00交作业"};
+     courseVec.push_back(data4);
+    courseData data5={xm_course,"Shell","每周六晚上20:00交作业"};
+     courseVec.push_back(data5);
+    courseData data6={xm_course,"Python","即将开始"};
+     courseVec.push_back(data6);
+    courseData data7={pg_course,"Linux","时间剩余180分钟"};
+     courseVec.push_back(data7);
+    shared_ptr<CCourseMgr> pcourseMgrRef = make_shared<CCourseMgr>();
+    for(const auto&r:courseVec)
+    {
+       pcourseMgrRef->CreateCourse(r.type,r.courseName,r.strHomeWork);
+    }
+    shared_ptr<CcmdMgr> pCmdMgrRef = make_shared<CcmdMgr>();
+    pCmdMgrRef->CreateSys(simpleChinese,pcourseMgrRef);
+    pCmdMgrRef->CreateSys(english,pcourseMgrRef);
+    pCmdMgrRef->Input();
+    return 0;
+}
+```
+
 
