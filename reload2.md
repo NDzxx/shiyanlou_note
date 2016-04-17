@@ -9,7 +9,7 @@
      x[y]或 x.operator[](y)
 x的类型为T,y的类型为T2.
     下面来看一个简单的例子：
-    ```
+```
 
 #include <iostream.h>
 
