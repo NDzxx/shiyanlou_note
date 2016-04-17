@@ -7,5 +7,5 @@
 * [weak_ptr](weakptr.md)
 * [memLeak](memleak.md)
 * [第1周：C++基础入门（第1章至第3章）](chapter1.md)
-* [C++](c++.md)
+* [shiyanlou](c++.md)
 
