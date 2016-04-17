@@ -1,3 +1,1 @@
-# My Awesome Book
-
-This file file serves as your book's preface, a great place to describe your book's content and ideas.
+# 6月30号轻笔记关闭，文件内容删除，2016.4.17又因为钥匙丢屋子里面，没法进去，干脆在公司整理一下
