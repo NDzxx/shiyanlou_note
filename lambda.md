@@ -35,3 +35,6 @@ If you die when there's no one watching, and your ratings drop and you're forgot
  
 
 ##生成随机数字  
+如代码1所示。  
+generate函数接受三个参数，前两个参数指定容器的起止位置，后一个参数指定生成逻辑，  
+这个逻辑正是通过Lambda来表达的。
