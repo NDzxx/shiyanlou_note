@@ -59,3 +59,9 @@ generate函数接受三个参数，前两个参数指定容器的起止位置，
       这听起来就像有个对象，i变量是它的成员字段，而Lambda则是它的成员函数，事实上，Lambda是函数对象（Function Object）的语法糖，代码4的Lambda最终会被转换成代码5所示的Functor类。  
 代码5：  
 ![c5](c5.png)  
+你也可以把代码4的Lambda替换成Functor类，如代码6所示。  
+代码6:  
+
+![c6](c6.png)  
+
+
